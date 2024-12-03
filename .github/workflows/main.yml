@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  Docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Set up Git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions-bot@example.com"
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build the project
+        run: npm run build
+        
+      - name: Get current version
+        id: version
+        run: echo "TAG=$(node -p 'require(\"./package.json\").version')" >> $GITHUB_ENV
+        
+      - name: Bump version
+        run: npm version patch
+      
+      - name: Push changes and new tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push
+          git push --tags
+      
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      
+      - name: Build Docker image
+        run: docker build . --file Dockerfile --tag sarthak503/auth-web:v1.0
+        
+      - name: Push Docker image
+        run: docker push sarthak503/tut:${{ env.TAG }}
