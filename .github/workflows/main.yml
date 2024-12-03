@@ -12,36 +12,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
       
-      - name: setup git config
+      - name: Set up Git config
         run: |
           git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
+          git config user.email "github-actions-bot@example.com"
       
-      - name: Dependecies
+      - name: Install dependencies
         run: npm ci
       
-      - name: Build
+      - name: Build the project
         run: npm run build
         
-      - name: Save version
+      - name: Get current version
         id: version
-        run: echo ::set-output name=tag::$(echo $(node -p -e "require('./package.json').version"))
+        run: echo "TAG=$(node -p -e \"require('./package.json').version\")" >> $GITHUB_ENV
         
-      - name: Increase version
+      - name: Bump version
         run: npm version patch
-        
-      - name: Push new version
-        run: git push
       
-      - name: Login to DockerHub Registry
-        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-        
+      - name: Push changes and new tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push
+          git push --tags
+      
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      
       - name: Build Docker image
-        run: docker build . --file Dockerfile --tag sarthak503/tut:${{steps.version.outputs.tag}}
+        run: docker build . --file Dockerfile --tag sarthak503/tut:${{ env.TAG }}
         
-      - name: Push to Docker Hub
-        run: docker push sarthak503/tut:${{steps.version.outputs.tag}}
+      - name: Push Docker image
+        run: docker push sarthak503/tut:${{ env.TAG }}
