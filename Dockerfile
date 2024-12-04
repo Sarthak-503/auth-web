@@ -1,5 +1,5 @@
 # Stage 1: Build the VITE app
-FROM node:18 as build
+FROM node:20 as build
 WORKDIR /app
 # Copy package.json and lock file
 COPY package*.json ./
