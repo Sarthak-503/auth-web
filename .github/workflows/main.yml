@@ -24,26 +24,15 @@ jobs:
       
       - name: Build the project
         run: npm run build
-        
-      - name: Get current version
-        id: version
-        run: echo "TAG=$(node -p 'require(\"./package.json\").version')" >> $GITHUB_ENV
-        
-      - name: Bump version
-        run: npm version patch
       
-      - name: Push changes and new tag
+      
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build, tag, and push Docker image
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_NAME: ghcr.io/${{ github.repository }}/auth-web
+          IMAGE_TAG: ${{ github.ref_name}}
         run: |
-          git push
-          git push --tags
-      
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      
-      - name: Build Docker image
-        run: docker build . --file Dockerfile --tag sarthak503/auth-web:v1.0
-        
-      - name: Push Docker image
-        run: docker push sarthak503/auth-web:v1.0
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+          docker push $IMAGE_NAME:$IMAGE_TAG
