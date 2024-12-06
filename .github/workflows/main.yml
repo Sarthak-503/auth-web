@@ -58,7 +58,6 @@ jobs:
       # Step 10: Build Docker image
       - name: Build Docker image
         run: |
-          # docker build . --file Dockerfile --tag ghcr.io/${{ github.repository_owner }}/auth-web:${{ env.TAG }}
           docker build . --file path/to/Dockerfile --tag ghcr.io/Sarthak-503/auth-web:<tag>
 
       # Step 11: Push Docker image to GHCR
