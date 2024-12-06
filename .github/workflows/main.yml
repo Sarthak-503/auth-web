@@ -11,56 +11,43 @@ jobs:
   Docker:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Check out the code
-      - uses: actions/checkout@v3
-
-      # Step 2: Set up Node.js
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # Step 3: Set up Git configuration
+      
       - name: Set up Git config
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions-bot@example.com"
-
-      # Step 4: Install dependencies
+      
       - name: Install dependencies
         run: npm ci
-
-      # Step 5: Build the project
+      
       - name: Build the project
         run: npm run build
-
-      # Step 6: Get current version from package.json
+        
       - name: Get current version
         id: version
         run: echo "TAG=$(node -p 'require(\"./package.json\").version')" >> $GITHUB_ENV
-
-      # Step 7: Bump version
+        
       - name: Bump version
         run: npm version patch
-
-      # Step 8: Push changes and new tag to the repo
+      
       - name: Push changes and new tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git push
           git push --tags
-
-      # Step 9: Log in to GitHub Container Registry
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      # Step 10: Build Docker image
+      
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      
       - name: Build Docker image
-        run: |
-           run: docker build . --file Dockerfile --tag sarthak503/auth-web:v1.0
-
-      # Step 11: Push Docker image to GHCR
+        run: docker build . --file Dockerfile --tag sarthak503/auth-web:v1.0
+        
       - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/auth-web:${{ env.TAG }}
+        run: docker push sarthak503/auth-web:v1.0
